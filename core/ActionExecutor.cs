@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using GestureFlow.Core;
 
 namespace GestureFlow.Core
 {
     /// <summary>
-    /// ⌨️ Выполняет действия (отправляет комбинации клавиш) через SendInput API.
-    /// Работает в фоновом потоке, не блокируя хук мыши.
+    /// ⌨️ Выполняет действия через SendInput API + прямые Win32 вызовы.
     /// </summary>
     public class ActionExecutor
     {
@@ -17,6 +17,15 @@ namespace GestureFlow.Core
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+        // 🔑 Win32 API для управления окнами (галочка)
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        private const int SW_MINIMIZE = 6;
 
         private const uint INPUT_KEYBOARD = 1;
         private const uint KEYEVENTF_KEYDOWN = 0;
@@ -31,23 +40,61 @@ namespace GestureFlow.Core
             }
             Task.Run(() => { Thread.Sleep(1000); lock (_lock) _isCooldown = false; });
 
-            string? combo = gesture switch
+            switch (gesture)
             {
-                GestureType.Left => "Alt+Left",
-                GestureType.Right => "Alt+Right",
-                GestureType.Up => "Ctrl+T",
-                GestureType.Down => "Ctrl+W",
-                _ => null
-            };
-
-            if (string.IsNullOrEmpty(combo))
-            {
-                Console.WriteLine($"⚠️ Нет действия для {gesture}");
-                return;
+                case GestureType.Left:
+                    Console.WriteLine("⌨️ Выполняю: Alt+Left");
+                    SendCombo("Alt+Left");
+                    break;
+                case GestureType.Right:
+                    Console.WriteLine("⌨️ Выполняю: Alt+Right");
+                    SendCombo("Alt+Right");
+                    break;
+                case GestureType.Up:
+                    Console.WriteLine("⌨️ Выполняю: Ctrl+T");
+                    SendCombo("Ctrl+T");
+                    break;
+                case GestureType.Down:
+                    Console.WriteLine("⌨️ Выполняю: Ctrl+W");
+                    SendCombo("Ctrl+W");
+                    break;
+                case GestureType.Circle:
+                    Console.WriteLine("⌨️ Выполняю: F5 (обновить)");
+                    SendCombo("F5");
+                    break;
+                case GestureType.Checkmark:
+                    // 🔑 ПРЯМОЙ Win32 вызов — 100% сворачивает окно в любом режиме!
+                    Console.WriteLine("⌨️ Сворачиваю активное окно (ShowWindow)");
+                    MinimizeActiveWindow();
+                    break;
+                default:
+                    Console.WriteLine($"⚠️ Нет действия для {gesture}");
+                    break;
             }
+        }
 
-            Console.WriteLine($"⌨️ Выполняю: {combo}");
-            SendCombo(combo);
+        /// <summary>
+        /// 🔑 Сворачивает активное окно через Win32 API.
+        /// Работает всегда: fullscreen, maximized, restored — без разницы.
+        /// </summary>
+        private void MinimizeActiveWindow()
+        {
+            try
+            {
+                IntPtr hwnd = GetForegroundWindow();
+                if (hwnd == IntPtr.Zero)
+                {
+                    Console.WriteLine("❌ Нет активного окна");
+                    return;
+                }
+
+                bool result = ShowWindow(hwnd, SW_MINIMIZE);
+                Console.WriteLine(result ? "✅ Окно свёрнуто" : "❌ ShowWindow failed");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ MinimizeActiveWindow error: {ex.Message}");
+            }
         }
 
         private void SendCombo(string combo)
@@ -108,7 +155,7 @@ namespace GestureFlow.Core
 
                 int size = Marshal.SizeOf(typeof(INPUT));
                 uint result = SendInput((uint)inputs.Length, inputs, size);
-                
+
                 if (result == 0)
                 {
                     int err = Marshal.GetLastWin32Error();
@@ -130,18 +177,20 @@ namespace GestureFlow.Core
             "ctrl" or "control" => 0x11,
             "shift" => 0x10,
             "alt" or "menu" => 0x12,
+            "win" or "windows" or "super" => 0x5B,
             "left" => 0x25,
             "right" => 0x27,
             "up" => 0x26,
             "down" => 0x28,
             "t" => 0x54,
             "w" => 0x57,
+            "f4" => 0x73,
             "f5" => 0x74,
             _ => 0
         };
 
-        // === Win32 структуры (полные, для 64-bit Windows) ===
-        
+        // === Win32 структуры ===
+
         [StructLayout(LayoutKind.Sequential)]
         private struct INPUT
         {
