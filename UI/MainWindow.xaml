@@ -1,62 +1,24 @@
 <Window x:Class="GestureFlow.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GestureFlow — Центр управления"
-        Width="900" Height="650"
+        Title="GestureFlow" Width="1100" Height="750"
         WindowStartupLocation="CenterScreen"
-        Background="#1E1E2E"
-        Foreground="#FFFFFF"
-        FontFamily="Segoe UI"
-        FontSize="14">
-
+        Background="#0F0F1E" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
-        <!-- Современный стиль для TabControl -->
-        <Style TargetType="TabItem">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="border"
-                                Background="Transparent"
-                                Padding="16,10"
-                                Margin="0,0,2,0"
-                                CornerRadius="8,8,0,0">
-                            <ContentPresenter ContentSource="Header"
-                                            TextElement.Foreground="#A0A0B8"
-                                            TextElement.FontSize="14"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#2D2D44"/>
-                                <Setter Property="TextElement.Foreground" Value="#FF50B4"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#252538"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Стиль для заголовков -->
-        <Style x:Key="HeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#FF50B4"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-        </Style>
-
-        <!-- Стиль для карточек -->
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#2D2D44"/>
+        <LinearGradientBrush x:Key="PurpleGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FF50B4" Offset="0"/>
+            <GradientStop Color="#A855F7" Offset="1"/>
+        </LinearGradientBrush>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="#1E1E2E"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="20"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Margin" Value="0,0,12,12"/>
+            <Setter Property="BorderBrush" Value="#2D2D44"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
-
-        <!-- Стиль для кнопок -->
-        <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#FF50B4"/>
+        <Style x:Key="Btn" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PurpleGradient}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Padding" Value="20,10"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -64,222 +26,140 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF70C4"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#D040A0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
     </Window.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#2D2D44" Padding="24,16">
+        <Border Grid.Row="0" Background="#1E1E2E" Padding="30,20">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <StackPanel>
-                    <TextBlock Text="💜 GestureFlow"
-                             FontSize="28"
-                             FontWeight="Bold"
-                             Foreground="#FF50B4"/>
-                    <TextBlock Text="Центр управления жестами"
-                             FontSize="14"
-                             Foreground="#A0A0B8"
-                             Margin="0,4,0,0"/>
-                </StackPanel>
-
-                <TextBlock Grid.Column="1"
-                         Text="v0.9.0"
-                         FontSize="12"
-                         Foreground="#666680"
-                         VerticalAlignment="Center"/>
+                <TextBlock Text="💜 GestureFlow" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PurpleGradient}"/>
+                <Border HorizontalAlignment="Right" Background="#2D2D44" CornerRadius="8" Padding="12,6">
+                    <TextBlock Text="v0.9.5" Foreground="#8B8BA7"/>
+                </Border>
             </Grid>
         </Border>
-
-        <!-- Tabs -->
-        <TabControl Grid.Row="1"
-                   Background="Transparent"
-                   BorderThickness="0"
-                   Margin="16,16,16,0">
-
-            <!-- Tab 1: Жесты -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="20">
             <TabItem Header="🎬 Жесты">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                    <StackPanel Margin="0,16,0,16">
-                        <TextBlock Text="Все доступные жесты" Style="{StaticResource HeaderStyle}"/>
-
-                        <Border Style="{StaticResource CardStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <WrapPanel Margin="0,10,0,0">
+                        <Border Style="{StaticResource Card}" Width="300">
                             <StackPanel>
-                                <TextBlock Text="← Свайп влево" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Назад в браузере (Alt+Left)" Foreground="#A0A0B8" Margin="0,4,0,0"/>
+                                <TextBlock Text="←" FontSize="32" Foreground="#A855F7"/>
+                                <TextBlock Text="Свайп влево" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                <TextBlock Text="Назад в браузере" Foreground="#8B8BA7"/>
+                                <Border Background="#2D2D44" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <TextBlock Text="Alt+Left" FontSize="12" Foreground="#A0A0B8" FontFamily="Consolas"/>
+                                </Border>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}" Width="300">
                             <StackPanel>
-                                <TextBlock Text="→ Свайп вправо" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Вперёд в браузере (Alt+Right)" Foreground="#A0A0B8" Margin="0,4,0,0"/>
+                                <TextBlock Text="→" FontSize="32" Foreground="#A855F7"/>
+                                <TextBlock Text="Свайп вправо" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                <TextBlock Text="Вперёд в браузере" Foreground="#8B8BA7"/>
+                                <Border Background="#2D2D44" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <TextBlock Text="Alt+Right" FontSize="12" Foreground="#A0A0B8" FontFamily="Consolas"/>
+                                </Border>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}" Width="300">
                             <StackPanel>
-                                <TextBlock Text="↑ Свайп вверх" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Новая вкладка (Ctrl+T)" Foreground="#A0A0B8" Margin="0,4,0,0"/>
+                                <TextBlock Text="↑" FontSize="32" Foreground="#A855F7"/>
+                                <TextBlock Text="Свайп вверх" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                <TextBlock Text="Новая вкладка" Foreground="#8B8BA7"/>
+                                <Border Background="#2D2D44" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <TextBlock Text="Ctrl+T" FontSize="12" Foreground="#A0A0B8" FontFamily="Consolas"/>
+                                </Border>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}" Width="300">
                             <StackPanel>
-                                <TextBlock Text="↓ Свайп вниз" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Закрыть вкладку (Ctrl+W)" Foreground="#A0A0B8" Margin="0,4,0,0"/>
+                                <TextBlock Text="↓" FontSize="32" Foreground="#A855F7"/>
+                                <TextBlock Text="Свайп вниз" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                <TextBlock Text="Закрыть вкладку" Foreground="#8B8BA7"/>
+                                <Border Background="#2D2D44" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <TextBlock Text="Ctrl+W" FontSize="12" Foreground="#A0A0B8" FontFamily="Consolas"/>
+                                </Border>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}" Width="300">
                             <StackPanel>
-                                <TextBlock Text="⭕ Круг" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Обновить страницу (F5)" Foreground="#A0A0B8" Margin="0,4,0,0"/>
+                                <TextBlock Text="⭕" FontSize="32" Foreground="#A855F7"/>
+                                <TextBlock Text="Круг" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                <TextBlock Text="Обновить страницу" Foreground="#8B8BA7"/>
+                                <Border Background="#2D2D44" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <TextBlock Text="F5" FontSize="12" Foreground="#A0A0B8" FontFamily="Consolas"/>
+                                </Border>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}" Width="300">
                             <StackPanel>
-                                <TextBlock Text="✅ Галочка" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Свернуть активное окно" Foreground="#A0A0B8" Margin="0,4,0,0"/>
+                                <TextBlock Text="✓" FontSize="32" Foreground="#A855F7"/>
+                                <TextBlock Text="Галочка" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                <TextBlock Text="Свернуть окно" Foreground="#8B8BA7"/>
+                                <Border Background="#2D2D44" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <TextBlock Text="MINIMIZE" FontSize="12" Foreground="#A0A0B8" FontFamily="Consolas"/>
+                                </Border>
                             </StackPanel>
                         </Border>
-                    </StackPanel>
+                    </WrapPanel>
                 </ScrollViewer>
             </TabItem>
-
-            <!-- Tab 2: Настройки -->
             <TabItem Header="⚙️ Настройки">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                    <StackPanel Margin="0,16,0,16">
-                        <TextBlock Text="Конфигурация" Style="{StaticResource HeaderStyle}"/>
-
-                        <Border Style="{StaticResource CardStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,10,0,0" MaxWidth="600" HorizontalAlignment="Left">
+                        <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="🎨 Цвет трейла" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Настрой через settings.json" Foreground="#A0A0B8" Margin="0,4,0,12"/>
-                                <Button Content="Открыть settings.json"
-                                      Style="{StaticResource PrimaryButton}"
-                                      Click="OpenSettings_Click"/>
+                                <TextBlock Text="🎨 Скин трейла" FontSize="16" FontWeight="SemiBold"/>
+                                <TextBlock Text="Выберите визуальный стиль" Foreground="#8B8BA7" Margin="0,4,0,12"/>
+                                <ComboBox x:Name="SkinComboBox" SelectionChanged="SkinComboBox_SelectionChanged" Height="40" Background="#2D2D44" Foreground="White">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="White"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="🔥 Hot-reload" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="Изменения применяются мгновенно — перезапуск не нужен!"
-                                         Foreground="#A0A0B8"
-                                         TextWrapping="Wrap"/>
+                                <TextBlock Text="📄 settings.json" FontSize="16" FontWeight="SemiBold"/>
+                                <TextBlock Text="Тонкая настройка" Foreground="#8B8BA7" Margin="0,4,0,12"/>
+                                <Button Content="Открыть файл" Style="{StaticResource Btn}" Click="OpenSettings_Click" HorizontalAlignment="Left"/>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="🎭 Скины трейла" FontSize="16" FontWeight="SemiBold" Foreground="#666680"/>
-                                <TextBlock Text="🔜 Coming soon in v0.9.5" Foreground="#666680" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="🎬 Профили приложений" FontSize="16" FontWeight="SemiBold" Foreground="#666680"/>
-                                <TextBlock Text="🔜 Coming soon in v0.9.7" Foreground="#666680" Margin="0,4,0,0"/>
+                                <TextBlock Text="🖌️ Свои скины" FontSize="16" FontWeight="SemiBold"/>
+                                <TextBlock Text="Папка skins/" Foreground="#8B8BA7" Margin="0,4,0,12"/>
+                                <Button Content="Открыть папку" Style="{StaticResource Btn}" Click="OpenSkinsFolder_Click" HorizontalAlignment="Left"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-
-            <!-- Tab 3: Статистика -->
-            <TabItem Header="📊 Статистика">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                    <StackPanel Margin="0,16,0,16">
-                        <TextBlock Text="Ваша активность" Style="{StaticResource HeaderStyle}"/>
-
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="📈 Всего жестов выполнено" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="0" FontSize="48" FontWeight="Bold" Foreground="#FF50B4" Margin="0,8,0,0"/>
-                                <TextBlock Text="🔜 Счётчик появится в v1.0" Foreground="#666680" Margin="0,8,0,0"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="⭐ Самый частый жест" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="—" FontSize="32" FontWeight="Bold" Foreground="#FF50B4" Margin="0,8,0,0"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- Tab 4: О программе -->
             <TabItem Header="ℹ️ О программе">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
-                    <StackPanel Margin="0,16,0,16">
-                        <TextBlock Text="GestureFlow" Style="{StaticResource HeaderStyle}"/>
-
-                        <Border Style="{StaticResource CardStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,10,0,0" MaxWidth="600" HorizontalAlignment="Left">
+                        <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="Control your PC with a flick of your wrist"
-                                         FontSize="16"
-                                         FontStyle="Italic"
-                                         Foreground="#A0A0B8"/>
-                                <TextBlock Text="Версия 0.9.0" FontSize="14" Foreground="#A0A0B8" Margin="0,12,0,0"/>
+                                <TextBlock Text="GestureFlow v0.9.5" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PurpleGradient}"/>
+                                <TextBlock Text="Control your PC with a flick of your wrist" Foreground="#8B8BA7" Margin="0,8,0,0"/>
                             </StackPanel>
                         </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
+                        <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="✨ Особенности" FontSize="16" FontWeight="SemiBold"/>
-                                <TextBlock Text="• Neon purple trail" Foreground="#A0A0B8" Margin="0,8,0,0"/>
-                                <TextBlock Text="• ⚡ Менее 100ms задержка" Foreground="#A0A0B8" Margin="0,4,0,0"/>
-                                <TextBlock Text="• 🎯 Smart click detection" Foreground="#A0A0B8" Margin="0,4,0,0"/>
-                                <TextBlock Text="• 🖥️ Multi-monitor support" Foreground="#A0A0B8" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="🔗 Ссылки" FontSize="16" FontWeight="SemiBold"/>
-                                <Button Content="📂 GitHub репозиторий"
-                                      Style="{StaticResource PrimaryButton}"
-                                      Margin="0,12,0,0"
-                                      Click="OpenGitHub_Click"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource CardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="© 2026 BestArmor" FontSize="14" Foreground="#666680"/>
-                                <TextBlock Text="Built with .NET 10 &amp; WPF 💜" FontSize="12" Foreground="#666680" Margin="0,4,0,0"/>
+                                <TextBlock Text="🔗 GitHub" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                <Button Content="Открыть репозиторий" Style="{StaticResource Btn}" Click="OpenGitHub_Click" HorizontalAlignment="Left"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

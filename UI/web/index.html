@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GestureFlow</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="particles"></canvas>
+    
+    <div class="app">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">💜</span>
+                <div>
+                    <h1 class="logo-text">GestureFlow</h1>
+                    <p class="logo-sub">Control your PC with a flick of your wrist</p>
+                </div>
+            </div>
+            <div class="version-badge">v0.9.5</div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="gestures">
+                <span class="tab-icon">🎬</span>
+                <span>Жесты</span>
+            </button>
+            <button class="tab" data-tab="settings">
+                <span class="tab-icon">⚙️</span>
+                <span>Настройки</span>
+            </button>
+            <button class="tab" data-tab="stats">
+                <span class="tab-icon">📊</span>
+                <span>Статистика</span>
+            </button>
+            <button class="tab" data-tab="about">
+                <span class="tab-icon">ℹ️</span>
+                <span>О программе</span>
+            </button>
+        </nav>
+
+        <main class="content">
+            <!-- Жесты -->
+            <div class="tab-content active" id="gestures">
+                <h2 class="section-title">
+                    <span class="title-icon">🎬</span>
+                    Все доступные жесты
+                </h2>
+                <div class="gestures-grid">
+                    <div class="gesture-card">
+                        <div class="gesture-icon">←</div>
+                        <h3>Свайп влево</h3>
+                        <p>Назад в браузере</p>
+                        <div class="hotkey">Alt + Left</div>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-icon">→</div>
+                        <h3>Свайп вправо</h3>
+                        <p>Вперёд в браузере</p>
+                        <div class="hotkey">Alt + Right</div>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-icon">↑</div>
+                        <h3>Свайп вверх</h3>
+                        <p>Новая вкладка</p>
+                        <div class="hotkey">Ctrl + T</div>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-icon">↓</div>
+                        <h3>Свайп вниз</h3>
+                        <p>Закрыть вкладку</p>
+                        <div class="hotkey">Ctrl + W</div>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-icon">⭕</div>
+                        <h3>Круг</h3>
+                        <p>Обновить страницу</p>
+                        <div class="hotkey">F5</div>
+                    </div>
+                    <div class="gesture-card">
+                        <div class="gesture-icon">✅</div>
+                        <h3>Галочка</h3>
+                        <p>Свернуть окно</p>
+                        <div class="hotkey">MINIMIZE</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Настройки -->
+            <div class="tab-content" id="settings">
+                <h2 class="section-title">
+                    <span class="title-icon">⚙️</span>
+                    Персонализация
+                </h2>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🎨</span>
+                        <div>
+                            <h3>Скин трейла</h3>
+                            <p>Выберите визуальный стиль трейла</p>
+                        </div>
+                    </div>
+                    <select id="skinSelect" class="select"></select>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">📄</span>
+                        <div>
+                            <h3>Расширенная конфигурация</h3>
+                            <p>Открыть файл settings.json</p>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="openSettings()">Открыть settings.json</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🖌️</span>
+                        <div>
+                            <h3>Пользовательские скины</h3>
+                            <p>Создавайте свои скины в формате JSON</p>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="openSkinsFolder()">Открыть папку скинов</button>
+                </div>
+
+                <div class="card success-card">
+                    <div class="card-header">
+                        <span class="card-icon pulse">🔥</span>
+                        <div>
+                            <h3>Hot-reload активен</h3>
+                            <p>Изменения применяются мгновенно без перезапуска</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="tab-content" id="stats">
+                <h2 class="section-title">
+                    <span class="title-icon">📊</span>
+                    Ваша активность
+                </h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Всего жестов</div>
+                        <div class="stat-hint">Скоро в v1.0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Любимый жест</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎨</div>
+                        <div class="stat-value" id="currentSkinDisplay">Solid</div>
+                        <div class="stat-label">Текущий скин</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- О программе -->
+            <div class="tab-content" id="about">
+                <h2 class="section-title">
+                    <span class="title-icon">ℹ️</span>
+                    GestureFlow
+                </h2>
+                
+                <div class="card">
+                    <p class="quote">"Control your PC with a flick of your wrist"</p>
+                    <p class="version">Версия 0.9.5</p>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">✨ Особенности</h3>
+                    <div class="features">
+                        <div class="feature">⚡ Менее 100ms задержка</div>
+                        <div class="feature">🎯 Smart click detection</div>
+                        <div class="feature">🖥️ Multi-monitor support</div>
+                        <div class="feature">🎨 6 скинов трейла</div>
+                        <div class="feature">🖌️ Пользовательские скины</div>
+                        <div class="feature">🔥 Hot-reload</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">🔗 Ссылки</h3>
+                    <button class="btn" onclick="openGitHub()">📂 GitHub репозиторий</button>
+                </div>
+
+                <div class="footer-card">
+                    <p>© 2026 BestArmor</p>
+                    <p class="footer-sub">Built with .NET 10 & WPF 💜</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
