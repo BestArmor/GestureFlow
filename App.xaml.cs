@@ -1,5 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
+
+// 🔑 Алиасы чтобы разрешить конфликт между WPF и WinForms
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
+
 using GestureFlow.Core;
 using GestureFlow.Services;
 using GestureFlow.UI;
@@ -13,6 +20,7 @@ namespace GestureFlow
         private ActionExecutor? _executor;
         private TrailOverlay? _trail;
         private ConfigService? _config;
+        private TrayIconManager? _trayIcon;
         private bool _isDrawing = false;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -20,16 +28,14 @@ namespace GestureFlow
             base.OnStartup(e);
 
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            Console.WriteLine("🚀 Запуск GestureFlow v0.7...");
+            Console.WriteLine("🚀 Запуск GestureFlow v0.8...");
 
-            // 🔧 Инициализируем ConfigService — создаст settings.json если его нет
             _config = new ConfigService();
             var cfg = _config.Current;
 
             Console.WriteLine($"📊 Пороги: move={cfg.Thresholds.MoveThresholdPx}px, hold={cfg.Thresholds.HoldThresholdMs}ms, min={cfg.Thresholds.MinGestureLengthPx}px");
             Console.WriteLine($"🎨 Трейл: {cfg.Trail.Color}, толщина={cfg.Trail.Thickness}px");
 
-            // 🔧 Передаём пороги из конфига в компоненты
             _recognizer = new GestureRecognizer(cfg.Thresholds.MinGestureLengthPx);
             _executor = new ActionExecutor();
             _trail = new TrailOverlay(cfg.Trail.Color, cfg.Trail.Thickness);
@@ -68,34 +74,85 @@ namespace GestureFlow
                 }
             };
 
-            // 🔧 Подписываемся на hot-reload настроек
             _config.SettingsChanged += OnSettingsChanged;
+
+            // 🎯 Иконка в трее
+            _trayIcon = new TrayIconManager();
+            _trayIcon.ExitRequested += () => Shutdown();
+            _trayIcon.AboutRequested += ShowAboutDialog;
+            _trayIcon.OpenSettingsRequested += OpenSettingsFile;
 
             _hook.Start();
 
             Console.WriteLine("✅ GestureFlow запущен!");
+            Console.WriteLine("🎯 Иконка в системном трее активна");
             Console.WriteLine("💜 Трейл активен");
-            Console.WriteLine("📝 settings.json создан — можешь редактировать");
             Console.WriteLine("👉 Зажми ПКМ и двигай");
+
+            // 💡 Toast-уведомление при запуске
+            if (!cfg.General.StartMinimized)
+            {
+                _trayIcon.ShowNotification(
+                    "GestureFlow запущен 💜",
+                    "Рисуй жесты с зажатой ПКМ!");
+            }
         }
 
-        /// <summary>
-        /// 🔥 Hot-reload: когда settings.json меняется, пересоздаём компоненты с новыми порогами
-        /// </summary>
+        private void ShowAboutDialog()
+        {
+            MessageBox.Show(
+                "🎨 GestureFlow v0.8.0\n\n" +
+                "Управление ПК с помощью жестов мыши\n\n" +
+                "══════════════════\n" +
+                "🎬 Жесты:\n" +
+                "  ← Назад  |  → Вперёд\n" +
+                "  ↑ Новая вкладка  |  ↓ Закрыть\n" +
+                "  ⭕ Обновить  |  ✅ Свернуть окно\n" +
+                "══════════════════\n\n" +
+                "⚙️ Конфигурация: settings.json\n" +
+                "🔥 Hot-reload: изменения применяются мгновенно\n\n" +
+                "© 2026 BestArmor | MIT License",
+                "О программе GestureFlow",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        private void OpenSettingsFile()
+        {
+            try
+            {
+                string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
+                if (File.Exists(configPath))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = configPath,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    MessageBox.Show("settings.json не найден!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось открыть файл:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void OnSettingsChanged(GestureFlow.Models.AppSettings newCfg)
         {
             Console.WriteLine($"🔄 Применяем новые настройки...");
-            
-            // Пересоздаём распознаватель с новой минимальной длиной
+
             _recognizer = new GestureRecognizer(newCfg.Thresholds.MinGestureLengthPx);
-            
-            // Пересоздаём хук с новыми порогами
+            _trail?.UpdateSettings(newCfg.Trail.Color, newCfg.Trail.Thickness);
+
             _hook?.Dispose();
             _hook = new MouseHook(
                 moveThresholdPx: newCfg.Thresholds.MoveThresholdPx,
                 holdThresholdMs: newCfg.Thresholds.HoldThresholdMs);
 
-            // Переподписываем события
             _hook.MouseMovedWhilePressed += (x, y) =>
             {
                 if (!_isDrawing)
@@ -124,8 +181,6 @@ namespace GestureFlow
             };
 
             _hook.Start();
-            // 🔥 Обновляем внешний вид трейла
-            _trail?.UpdateSettings(newCfg.Trail.Color, newCfg.Trail.Thickness);
             Console.WriteLine("✅ Новые пороги применены");
         }
 
@@ -134,6 +189,7 @@ namespace GestureFlow
             _hook?.Dispose();
             _trail?.Dispose();
             _config?.Dispose();
+            _trayIcon?.Dispose();
             base.OnExit(e);
         }
     }

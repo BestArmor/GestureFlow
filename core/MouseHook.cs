@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+// 🔑 Алиас для разрешения конфликта WPF/WinForms
+using Application = System.Windows.Application;
 
 namespace GestureFlow.Core
 {
@@ -129,7 +131,7 @@ namespace GestureFlow.Core
                     try
                     {
                         // 🔑 КРИТИЧНО: маршалим events в UI-поток для WPF
-                        var dispatcher = Application.Current?.Dispatcher;
+                        var dispatcher = System.Windows.Application.Current?.Dispatcher;
                         
                         switch (ev.Type)
                         {
