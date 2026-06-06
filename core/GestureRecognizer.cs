@@ -4,15 +4,20 @@ using System.Linq;
 
 namespace GestureFlow.Core
 {
-    /// <summary>
-    /// 🧠 Распознаватель жестов на основе геометрического анализа.
-    /// - Сложные жесты (⭕✅) — анализ формы траектории
-    /// - Базовые жесты (←→↑↓) — по доминирующему направлению
-    /// </summary>
     public class GestureRecognizer
     {
-        private const double MinLengthPx = 50.0;
+        // 🔧 Теперь настраивается через конструктор
+        private readonly double _minLengthPx;
         private readonly List<(double X, double Y)> _points = new();
+
+        /// <summary>
+        /// Создаёт распознаватель жестов.
+        /// </summary>
+        /// <param name="minGestureLengthPx">Минимальная длина жеста в пикселях (из settings.json)</param>
+        public GestureRecognizer(double minGestureLengthPx = 50.0)
+        {
+            _minLengthPx = minGestureLengthPx;
+        }
 
         public void AddPoint(double x, double y) => _points.Add((x, y));
         public void Reset() => _points.Clear();
@@ -29,14 +34,14 @@ namespace GestureFlow.Core
                 double dy = last.Y - first.Y;
                 double straightLength = Math.Sqrt(dx * dx + dy * dy);
 
-                if (straightLength < MinLengthPx) return GestureType.None;
+                if (straightLength < _minLengthPx) return GestureType.None;
 
                 double pathLength = PathLength(_points);
                 double width = _points.Max(p => p.X) - _points.Min(p => p.X);
                 double height = _points.Max(p => p.Y) - _points.Min(p => p.Y);
 
-                // ⭕ КРУГ: замкнутая траектория + почти квадратный bounding box
-                double closedness = straightLength / pathLength; // 0 = замкнут, 1 = прямая
+                // ⭕ КРУГ
+                double closedness = straightLength / pathLength;
                 double boxRatio = Math.Min(width, height) / (Math.Max(width, height) + 0.001);
                 double boxPerimeter = 2 * (width + height);
                 if (boxPerimeter < 0.001) boxPerimeter = 0.001;
@@ -48,7 +53,7 @@ namespace GestureFlow.Core
                     return GestureType.Circle;
                 }
 
-                // ✅ ГАЛОЧКА: есть нижняя точка (макс Y), потом резкий подъём вправо
+                // ✅ ГАЛОЧКА
                 int bottomIdx = 0;
                 double maxY = double.MinValue;
                 for (int i = 0; i < _points.Count; i++)
@@ -60,12 +65,11 @@ namespace GestureFlow.Core
                     }
                 }
 
-                // Нижняя точка должна быть в середине траектории (не в начале и не в конце)
                 if (bottomIdx > _points.Count * 0.2 && bottomIdx < _points.Count * 0.85)
                 {
-                    double descent = _points[bottomIdx].Y - _points[0].Y;     // сколько вниз
-                    double ascent = _points[bottomIdx].Y - _points[^1].Y;      // сколько вверх
-                    double horizontalProgress = _points[^1].X - _points[0].X; // правый наклон
+                    double descent = _points[bottomIdx].Y - _points[0].Y;
+                    double ascent = _points[bottomIdx].Y - _points[^1].Y;
+                    double horizontalProgress = _points[^1].X - _points[0].X;
 
                     if (descent > 40 && ascent > 40 && horizontalProgress > 30)
                     {
@@ -74,7 +78,7 @@ namespace GestureFlow.Core
                     }
                 }
 
-                // Fallback: простое направление
+                // Fallback: направление
                 if (Math.Abs(dx) > Math.Abs(dy))
                     return dx < 0 ? GestureType.Left : GestureType.Right;
                 else

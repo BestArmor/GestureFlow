@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,7 +7,6 @@ using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-// Алиасы для будущих расширений (WinForms)
 using WpfPoint = System.Windows.Point;
 using WpfBrushes = System.Windows.Media.Brushes;
 using WpfColor = System.Windows.Media.Color;
@@ -17,18 +15,13 @@ using WpfColorConverter = System.Windows.Media.ColorConverter;
 namespace GestureFlow.UI
 {
     /// <summary>
-    /// 💜 Прозрачное окно поверх всего экрана, рисующее фиолетовый трейл жеста.
-    /// - IsHitTestVisible = false → клики мыши проходят сквозь окно
-    /// - Поддержка нескольких мониторов (VirtualScreen)
-    /// - Плавное затухание после отпускания ПКМ
+    /// 💜 Прозрачное окно поверх всего экрана, рисующее трейл жеста.
     /// </summary>
     public class TrailOverlay : IDisposable
     {
         private const int MAX_POINTS = 300;
         private const double FADE_STEP = 0.15;
         private const int FADE_INTERVAL_MS = 30;
-        private const string TRAIL_COLOR = "#FF50B4";
-        private const double TRAIL_THICKNESS = 4.0;
 
         private Window? _window;
         private Polyline? _trailLine;
@@ -37,9 +30,28 @@ namespace GestureFlow.UI
         private double _opacity = 1.0;
         private bool _isVisible = false;
 
-        public TrailOverlay()
+        // 🔧 Настраиваемые параметры
+        private string _colorHex;
+        private double _thickness;
+        private SolidColorBrush? _brush;
+        private DropShadowEffect? _glowEffect;
+
+        public TrailOverlay(string colorHex = "#FF50B4", double thickness = 4.0)
         {
+            _colorHex = colorHex;
+            _thickness = thickness;
             CreateWindow();
+        }
+
+        /// <summary>
+        /// 🔥 Hot-reload: обновляет цвет и толщину без пересоздания окна
+        /// </summary>
+        public void UpdateSettings(string colorHex, double thickness)
+        {
+            _colorHex = colorHex;
+            _thickness = thickness;
+            ApplyBrushAndEffect();
+            Console.WriteLine($"🎨 Трейл обновлён: {colorHex}, {thickness}px");
         }
 
         private void CreateWindow()
@@ -54,14 +66,11 @@ namespace GestureFlow.UI
                 Topmost = true,
                 ShowActivated = false,
                 Focusable = false,
-                IsHitTestVisible = false,  // 🔑 КЛИКИ ПРОХОДЯТ СКВОЗЬ!
-                
-                // 🖥️ Поддержка нескольких мониторов
+                IsHitTestVisible = false,
                 Left = SystemParameters.VirtualScreenLeft,
                 Top = SystemParameters.VirtualScreenTop,
                 Width = SystemParameters.VirtualScreenWidth,
                 Height = SystemParameters.VirtualScreenHeight,
-                
                 Opacity = 0
             };
 
@@ -71,24 +80,16 @@ namespace GestureFlow.UI
                 IsHitTestVisible = false
             };
 
-            var color = (WpfColor)WpfColorConverter.ConvertFromString(TRAIL_COLOR)!;
-
             _trailLine = new Polyline
             {
-                Stroke = new SolidColorBrush(color),
-                StrokeThickness = TRAIL_THICKNESS,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
-                IsHitTestVisible = false,
-                Effect = new DropShadowEffect
-                {
-                    Color = color,
-                    BlurRadius = 10,
-                    ShadowDepth = 0,
-                    Opacity = 0.8
-                }
+                IsHitTestVisible = false
             };
+
+            // 🔧 Применяем цвет и толщину
+            ApplyBrushAndEffect();
 
             canvas.Children.Add(_trailLine);
             _window.Content = canvas;
@@ -99,13 +100,52 @@ namespace GestureFlow.UI
             };
             _fadeTimer.Tick += FadeTimer_Tick;
 
-            // Показываем окно невидимым
             _window.Show();
         }
 
         /// <summary>
-        /// Начинает рисование жеста
+        /// Применяет текущие цвет и толщину к трейлу
         /// </summary>
+        private void ApplyBrushAndEffect()
+        {
+            try
+            {
+                var color = (WpfColor)WpfColorConverter.ConvertFromString(_colorHex)!;
+                _brush = new SolidColorBrush(color);
+                _glowEffect = new DropShadowEffect
+                {
+                    Color = color,
+                    BlurRadius = 10,
+                    ShadowDepth = 0,
+                    Opacity = 0.8
+                };
+
+                if (_trailLine != null)
+                {
+                    _trailLine.Stroke = _brush;
+                    _trailLine.StrokeThickness = _thickness;
+                    _trailLine.Effect = _glowEffect;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Неверный цвет '{_colorHex}': {ex.Message}. Используем фиолетовый.");
+                var fallbackColor = (WpfColor)WpfColorConverter.ConvertFromString("#FF50B4")!;
+                _brush = new SolidColorBrush(fallbackColor);
+                if (_trailLine != null)
+                {
+                    _trailLine.Stroke = _brush;
+                    _trailLine.Effect = new DropShadowEffect
+                    {
+                        Color = fallbackColor,
+                        BlurRadius = 10,
+                        ShadowDepth = 0,
+                        Opacity = 0.8
+                    };
+                }
+            }
+        }
+
         public void StartDrawing(double x, double y)
         {
             if (_window == null) return;
@@ -122,19 +162,14 @@ namespace GestureFlow.UI
             AddPoint(x, y);
         }
 
-        /// <summary>
-        /// Добавляет точку к трейлу
-        /// </summary>
         public void AddPoint(double x, double y)
         {
             if (_window == null || !_isVisible) return;
 
-            // Конвертируем экранные координаты в локальные (для много-мониторных систем)
             double localX = x - SystemParameters.VirtualScreenLeft;
             double localY = y - SystemParameters.VirtualScreenTop;
             _buffer.Add(new WpfPoint(localX, localY));
 
-            // Ограничиваем количество точек
             if (_buffer.Count > MAX_POINTS)
             {
                 var thinned = new List<WpfPoint>();
@@ -149,9 +184,6 @@ namespace GestureFlow.UI
             _trailLine!.Points = new PointCollection(_buffer);
         }
 
-        /// <summary>
-        /// Завершает рисование — трейл начнёт плавно исчезать
-        /// </summary>
         public void EndDrawing()
         {
             _isVisible = false;
